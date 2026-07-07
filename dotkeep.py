@@ -44,13 +44,69 @@ def load_config():
         
     return normalized_files
 
+def sync_dotfiles():
+    """Moves local configs to repo and replaces them with standard symlinks."""
+    dotfiles = load_config()
+    repo_root = os.path.dirname(os.path.abspath(__file__))
+
+    for repo_name, sys_path in dotfiles.items():
+        repo_dest_path = os.path.join(repo_root, repo_name)
+
+        # Case 1: File is on the system but not in the repo yet
+        if os.path.exists(sys_path) and not os.path.islink(sys_path) and not os.path.exists(repo_dest_path):
+            print(f"📦 Tracking new dotfile: {sys_path}")
+            shutil.move(sys_path, repo_dest_path)
+            os.symlink(repo_dest_path, sys_path)
+            print(f"🔗 Linked: {sys_path} -> {repo_dest_path}")
+            
+        # Case 2: File is already tracking correctly via symlink
+        elif os.path.islink(sys_path):
+            if os.readlink(sys_path) == repo_dest_path:
+                print(f"✅ Already synced and healthy: {repo_name}")
+            else:
+                print(f"⚠️ Symlink mismatch for {repo_name}. Skipping to prevent data damage.")
+        else:
+            print(f"ℹ️ {repo_name} not yet active or setup on this machine. Run with --restore.")
+
+def restore_dotfiles():
+    """Deploys tracking data from the repository directly into a new environment."""
+    dotfiles = load_config()
+    repo_root = os.path.dirname(os.path.abspath(__file__))
+
+    for repo_name, sys_path in dotfiles.items():
+        repo_source_path = os.path.join(repo_root, repo_name)
+
+        if not os.path.exists(repo_source_path):
+            print(f"❌ Source tracking file missing in repo: {repo_name}. Skipping.")
+            continue
+
+        # Prevent overwriting actual unmanaged files without executing a backup first
+        if os.path.exists(sys_path) and not os.path.islink(sys_path):
+            backup_file(sys_path)
+            os.remove(sys_path)
+        elif os.path.islink(sys_path):
+            os.remove(sys_path) # Safe to remove old/broken links
+
+        # Ensure parent directories exist (e.g. ~/.config/path)
+        parent_dir = os.path.dirname(sys_path)
+        if not os.path.exists(parent_dir):
+            os.makedirs(parent_dir)
+
+        os.symlink(repo_source_path, sys_path)
+        print(f"🚀 Restored and Linked: {sys_path} -> {repo_source_path}")
+
 def main():
     parser = argparse.ArgumentParser(description="dotkeep: Minimalist dotfiles manager")
-    parser.add_argument("--sync", action="store_true", help="Sync system config files into repo")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--sync", action="store_true", help="Sync system config files into repo")
+    group.add_argument("--restore", action="store_true", help="Deploy symlinks to system from repo storage")
+    
     args = parser.parse_args()
     
-    if args.sync:
-        print("Syncing tracking logic coming next...")
-
-if __name__ == "__main__":
-    main()
+    try:
+        if args.sync:
+            sync_dotfiles()
+        elif args.restore:
+            restore_dotfiles()
+    except Exception as e:
+        print(f"💥 Critical Failure: {e}")
