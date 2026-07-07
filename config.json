@@ -1,0 +1,7 @@
+{
+  "dotfiles": {
+    ".bashrc": "~/.bashrc",
+    ".vimrc": "~/.vimrc",
+    "git_config": "~/.gitconfig"
+  }
+}
