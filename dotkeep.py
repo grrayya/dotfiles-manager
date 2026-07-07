@@ -28,6 +28,22 @@ def backup_file(filepath):
     print(f"💾 Backed up existing local file: {filepath} -> {backup_path}")
     return True
 
+def load_config():
+    """Loads and returns the config mapping file names to target paths."""
+    config_path = os.path.join(os.path.dirname(__file__), "config.json")
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Missing config.json mapping file.")
+        
+    with open(config_path, "r") as f:
+        config = json.load(f)
+        
+    # Expand ~ paths dynamically for the host operating system
+    normalized_files = {}
+    for repo_name, sys_path in config.get("dotfiles", {}).items():
+        normalized_files[repo_name] = os.path.expanduser(sys_path)
+        
+    return normalized_files
+
 def main():
     parser = argparse.ArgumentParser(description="dotkeep: Minimalist dotfiles manager")
     parser.add_argument("--sync", action="store_true", help="Sync system config files into repo")
