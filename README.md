@@ -1,24 +1,28 @@
 # Dotfiles Manager
 
-tool that helps to manage, monitor, and deploy your configuration files (dotfiles).
+A small tool for managing dotfiles across machines without pulling in any dependencies.
+
+`dotkeep` keeps your config files (`.bashrc`, `.vimrc`, whatever else you track) in one repo instead of scattered around. 
+
 
 ## Features
 
-The `dotkeep` tool consolidates your different system configuration files (e.g., `.bashrc`, `.vimrc`, or your CLI tools' configuration files) into one repository. The process occurs in both ways:
-1. **Synchronization:** Places your current system config files in your repository and creates symlinks of them.
-2. **Deployment:** Deploys your monitored dotfiles from your repository to your new machine by generating symlinks.
+- **No dependencies** — everything runs on Python's standard library, nothing to `pip install`.
+- **Backups before it touches anything** — your existing files get copied to `~/.dotfiles_backup` before dotkeep overwrites or symlinks them.
+- **Plain JSON mapping** — `config.json` maps repo files to their destination paths, so there's no magic about where things end up.
 
-**Key Features:**
-* **Zero Dependencies:** The `dotkeep` tool works purely on Python's Standard Library.
-* **Safe Backups:** Safely backs up your local files in the `~/.dotfiles_backup` folder before overwriting/symlinking them.
-* **JSON Mapping:** Uses simple and clear `config.json` file to map your repository files to system files paths.
+## Setup
 
----
+1. Drop `dotkeep.py` into your dotfiles repo.
+2. Add a `config.json` next to it, mapping repo filenames to system paths. For example:
 
-## Setup and Configuration
+```json
+{
+  "bashrc": "~/.bashrc",
+  "vimrc": "~/.vimrc"
+}
+```
 
-As the `dotkeep` tool is dependent on nothing else but Python's Standard Library, there is no need for additional installations. But you have to specify which files you want to manage through the tool via `config.json`.
+<!-- Replace this with your actual config.json format if it's different -->
 
-1. Create a file `dotkeep.py` inside your dotfiles repository.
-2. Create `config.json` file in the very same folder.
-3. Map file names of your repo to system files locations.
+3. Run it. That's it — no installation step, since it's pure standard library.
