@@ -44,7 +44,7 @@ def load_config():
     if not dotfiles:
         raise ValueError("config.json has no entries under \"dotfiles\".")
 
-
+    # Expand ~ here so callers don't have to think about paths per-OS
     return {
         repo_name: os.path.expanduser(sys_path)
         for repo_name, sys_path in dotfiles.items()
@@ -97,6 +97,9 @@ def sync_dotfiles(dry_run=False):
             continue
 
         if os.path.exists(repo_dest_path):
+            # File exists on the system AND already in the repo, but isn't linked.
+            # Moving it now would silently overwrite whatever is already tracked,
+            # so this needs a human decision, not an automatic clobber.
             print(f"Conflict: {repo_name} exists both on system and in repo but isn't linked. "
                   f"Resolve by hand (compare {sys_path} vs {repo_dest_path}), then re-run --sync.")
             continue
